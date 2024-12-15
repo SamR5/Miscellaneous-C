@@ -19,7 +19,7 @@ int hFood, wFood;
 struct Node* move_snake(struct Node* head, int direction);
 void add_food(struct Node* head);
 bool food_eaten(struct Node* head);
-void display(struct Node* head, int direction);
+void display(struct Node* head, int direction, struct Node* tail);
 bool end_game(struct Node* head);
 void setup();
 struct Node* init_snake();
@@ -65,22 +65,16 @@ bool food_eaten(struct Node* head) {
     return head->h == hFood && head->w == wFood;
 }
 
-void display(struct Node* head, int direction) {
-    clear();
-    for (int i=0; i<WIDTH*2+2; i++) mvprintw(0, i, "-");
+void display(struct Node* head, int direction, struct Node* tail) {
     struct Node* current = head->previous;
+    mvprintw(tail->h+1, 2*tail->w+1, " ");
     while (current != NULL) {
         mvprintw(current->h+1, 2*current->w+1, "#");
         current = current->previous;
     }
     mvprintw(hFood+1, 2*wFood+1, "@");
     mvprintw(head->h+1, 2*head->w+1, headShape[direction]);
-    for (int i=0; i<WIDTH*2+2; i++) mvprintw(HEIGHT+1, i, "-");
-    // 2 side bar
-    for (int i=1; i<HEIGHT+1; i++) {
-        mvprintw(i, 0, "|");
-        mvprintw(i, WIDTH*2+1, "|");
-    }
+    move(0, 0);
     refresh();
 }
 
@@ -98,6 +92,15 @@ void setup() {
     nodelay(stdscr, TRUE);
     timeout(0);
     //curs_set(0);
+    clear();
+    for (int i=0; i<WIDTH*2+2; i++) mvprintw(0, i, "-");
+    for (int i=0; i<WIDTH*2+2; i++) mvprintw(HEIGHT+1, i, "-");
+    // 2 side bar
+    for (int i=1; i<HEIGHT+1; i++) {
+        mvprintw(i, 0, "|");
+        mvprintw(i, WIDTH*2+1, "|");
+    }
+    refresh();
 }
 
 struct Node* init_snake() {
@@ -113,6 +116,7 @@ int main(int argc, char* argv[]) {
     setup();
 
     struct Node* snakeHead = init_snake();
+    struct Node* snakeTail = (struct Node*)malloc(sizeof(struct Node*));
     add_food(snakeHead);
     int direction = RIGHT;
 
@@ -121,7 +125,7 @@ int main(int argc, char* argv[]) {
     gettimeofday(&tv2,NULL);
     bool skipAutoMove;
 
-    display(snakeHead, direction);
+    display(snakeHead, direction, snakeTail);
 
     while (!end_game(snakeHead)) {
         //int c = getch();
@@ -146,11 +150,12 @@ int main(int argc, char* argv[]) {
                 skipAutoMove = false;
         }
         if (skipAutoMove) {
+            snakeTail = get_tail(snakeHead);
             snakeHead = move_snake(snakeHead, direction);
             // reseting the timer is important to restart the automatic move
             // every keystroke
             gettimeofday(&tv1, NULL);
-            display(snakeHead, direction);
+            display(snakeHead, direction, snakeTail);
             continue;
         }
 
@@ -158,8 +163,9 @@ int main(int argc, char* argv[]) {
         gettimeofday(&tv2, NULL);
         if (tv2.tv_sec*1000000+tv2.tv_usec - tv1.tv_sec*1000000-tv1.tv_usec > TICK) {
             gettimeofday(&tv1, NULL);
+            snakeTail = get_tail(snakeHead);
             snakeHead = move_snake(snakeHead, direction);
-            display(snakeHead, direction);
+            display(snakeHead, direction, snakeTail);
         }
         usleep(20*1000);
     }
@@ -172,5 +178,6 @@ int main(int argc, char* argv[]) {
     refresh();
     usleep(3000*1000);
     remove_snake(snakeHead);
+    free(snakeTail);
     return 0;
 }

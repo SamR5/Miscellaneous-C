@@ -10,6 +10,14 @@ struct Node* new_head(struct Node* head) {
     return newHead;
 }
 
+struct Node* get_tail(struct Node* head) {
+    struct Node** tmp = &head;
+    while ((*tmp)->previous != NULL) {
+        tmp = &(*tmp)->previous;
+    }
+    return *tmp;
+}
+
 void remove_tail(struct Node* head) {
     struct Node** tmp = &head;
     while ((*tmp)->previous != NULL) {

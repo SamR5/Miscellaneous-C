@@ -8,6 +8,7 @@ struct Node {
 };
 
 struct Node* new_head(struct Node* head); // return a new node linked to 'head'
+struct Node* get_tail(struct Node* head);
 void remove_tail(struct Node* snake);
 void check_edge(struct Node* head, int height, int width); // circular
 bool bite_self(struct Node* head);
